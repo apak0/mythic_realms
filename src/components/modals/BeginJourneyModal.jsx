@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import Button from "../ui/Button";
 import Input from "../ui/Input";
+import { useAuth } from "../../contexts/AuthContext";
 
 const BeginJourneyModal = ({ isOpen, onClose, onSwitchToSignIn }) => {
   const [formData, setFormData] = useState({
@@ -9,6 +10,9 @@ const BeginJourneyModal = ({ isOpen, onClose, onSwitchToSignIn }) => {
     password: "",
     confirmPassword: "",
   });
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const { signUp } = useAuth();
 
   if (!isOpen) return null;
 
@@ -20,10 +24,33 @@ const BeginJourneyModal = ({ isOpen, onClose, onSwitchToSignIn }) => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // TODO: Implement registration logic
-    console.log("Begin Journey:", formData);
+
+    if (formData.password !== formData.confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+
+    try {
+      setError(null);
+      setLoading(true);
+      const { error } = await signUp({
+        email: formData.email,
+        password: formData.password,
+        options: {
+          data: {
+            username: formData.username,
+          },
+        },
+      });
+      if (error) throw error;
+      onClose();
+    } catch (error) {
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

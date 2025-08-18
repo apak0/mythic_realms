@@ -4,13 +4,16 @@ import Icon from "../AppIcon";
 import Button from "./Button";
 import SignInModal from "../modals/SignInModal";
 import BeginJourneyModal from "../modals/BeginJourneyModal";
+import { useAuth } from "../../contexts/AuthContext";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isSignInOpen, setIsSignInOpen] = useState(false);
   const [isBeginJourneyOpen, setIsBeginJourneyOpen] = useState(false);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const location = useLocation();
+  const { user, signOut } = useAuth();
 
   const openSignIn = () => {
     setIsBeginJourneyOpen(false);
@@ -34,9 +37,20 @@ const Header = () => {
       setIsScrolled(window.scrollY > 20);
     };
 
+    const handleClickOutside = (event) => {
+      if (isProfileMenuOpen && !event.target.closest(".profile-menu")) {
+        setIsProfileMenuOpen(false);
+      }
+    };
+
     window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isProfileMenuOpen]);
 
   const navigationItems = [
     { path: "/portal-home", label: "Portal Home", icon: "Home" },
@@ -145,19 +159,74 @@ const Header = () => {
 
           {/* Desktop CTA */}
           <div className="hidden lg:flex items-center space-x-4">
-            <Button variant="outline" size="sm" onClick={openSignIn}>
-              <Icon name="LogIn" size={16} className="mr-2" />
-              Sign In
-            </Button>
-            <Button
-              variant="default"
-              size="sm"
-              className="legendary-button"
-              onClick={openBeginJourney}
-            >
-              <Icon name="Sparkles" size={16} className="mr-2" />
-              Begin Journey
-            </Button>
+            {user ? (
+              <div className="relative profile-menu">
+                <button
+                  onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+                  className="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-muted/50 smooth-transition profile-menu"
+                >
+                  <div className="w-8 h-8 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center">
+                    <Icon name="User" size={20} className="text-primary" />
+                  </div>
+                  <span className="font-inter text-sm text-foreground">
+                    {user.email?.split("@")[0]}
+                  </span>
+                  <Icon
+                    name={isProfileMenuOpen ? "ChevronUp" : "ChevronDown"}
+                    size={16}
+                    className="text-muted-foreground"
+                  />
+                </button>
+
+                {/* Profile Dropdown Menu */}
+                {isProfileMenuOpen && (
+                  <div className="absolute right-0 mt-2 w-48 py-2 bg-popover border border-border rounded-lg shadow-floating">
+                    <Link
+                      to="/player-sanctum"
+                      className="flex items-center space-x-3 px-4 py-2 text-sm text-popover-foreground hover:bg-muted/50 smooth-transition"
+                      onClick={() => setIsProfileMenuOpen(false)}
+                    >
+                      <Icon name="User" size={16} />
+                      <span>Profile</span>
+                    </Link>
+                    <Link
+                      to="/player-sanctum/settings"
+                      className="flex items-center space-x-3 px-4 py-2 text-sm text-popover-foreground hover:bg-muted/50 smooth-transition"
+                      onClick={() => setIsProfileMenuOpen(false)}
+                    >
+                      <Icon name="Settings" size={16} />
+                      <span>Settings</span>
+                    </Link>
+                    <button
+                      onClick={() => {
+                        signOut();
+                        setIsProfileMenuOpen(false);
+                      }}
+                      className="w-full flex items-center space-x-3 px-4 py-2 text-sm text-red-500 hover:bg-muted/50 smooth-transition"
+                    >
+                      <Icon name="LogOut" size={16} />
+                      <span>Sign Out</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <>
+                <Button variant="outline" size="sm" onClick={openSignIn}>
+                  <Icon name="LogIn" size={16} className="mr-2" />
+                  Sign In
+                </Button>
+                <Button
+                  variant="default"
+                  size="sm"
+                  className="legendary-button"
+                  onClick={openBeginJourney}
+                >
+                  <Icon name="Sparkles" size={16} className="mr-2" />
+                  Begin Journey
+                </Button>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -213,21 +282,66 @@ const Header = () => {
             </nav>
 
             {/* Mobile CTA */}
-            <div className="px-6 pb-6 pt-2 space-y-3 border-t border-border">
-              <Button variant="outline" fullWidth onClick={openSignIn}>
-                <Icon name="LogIn" size={16} className="mr-2" />
-                Sign In
-              </Button>
-              <Button
-                variant="default"
-                fullWidth
-                className="legendary-button"
-                onClick={openBeginJourney}
-              >
-                <Icon name="Sparkles" size={16} className="mr-2" />
-                Begin Journey
-              </Button>
-            </div>
+            {!user && (
+              <div className="px-6 pb-6 pt-2 space-y-3 border-t border-border">
+                <Button variant="outline" fullWidth onClick={openSignIn}>
+                  <Icon name="LogIn" size={16} className="mr-2" />
+                  Sign In
+                </Button>
+                <Button
+                  variant="default"
+                  fullWidth
+                  className="legendary-button"
+                  onClick={openBeginJourney}
+                >
+                  <Icon name="Sparkles" size={16} className="mr-2" />
+                  Begin Journey
+                </Button>
+              </div>
+            )}
+            {user && (
+              <div className="px-6 pb-6 pt-2 space-y-2 border-t border-border">
+                <div className="flex items-center space-x-3 px-4 py-3">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center">
+                    <Icon name="User" size={24} className="text-primary" />
+                  </div>
+                  <div>
+                    <div className="font-inter font-medium text-foreground">
+                      {user.email?.split("@")[0]}
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {user.email}
+                    </div>
+                  </div>
+                </div>
+                <Link
+                  to="/player-sanctum"
+                  onClick={closeMenu}
+                  className="flex items-center space-x-3 px-4 py-3 text-foreground hover:bg-muted/50 rounded-lg smooth-transition"
+                >
+                  <Icon name="User" size={20} />
+                  <span>Profile</span>
+                </Link>
+                <Link
+                  to="/player-sanctum/settings"
+                  onClick={closeMenu}
+                  className="flex items-center space-x-3 px-4 py-3 text-foreground hover:bg-muted/50 rounded-lg smooth-transition"
+                >
+                  <Icon name="Settings" size={20} />
+                  <span>Settings</span>
+                </Link>
+                <button
+                  onClick={() => {
+                    signOut();
+                    closeMenu();
+                  }}
+                  className="w-full flex items-center space-x-3 px-4 py-3 text-red-500 hover:bg-muted/50 rounded-lg smooth-transition"
+                >
+                  <Icon name="LogOut" size={20} />
+                  <span>Sign Out</span>
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>

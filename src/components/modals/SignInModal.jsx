@@ -1,17 +1,30 @@
 import React, { useState } from "react";
 import Button from "../ui/Button";
 import Input from "../ui/Input";
+import { useAuth } from "../../contexts/AuthContext";
 
 const SignInModal = ({ isOpen, onClose, onSwitchToSignUp }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const { signIn } = useAuth();
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // TODO: Implement sign in logic
-    console.log("Sign in:", { email, password });
+    try {
+      setError(null);
+      setLoading(true);
+      const { error } = await signIn({ email, password });
+      if (error) throw error;
+      onClose();
+    } catch (error) {
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -73,8 +86,13 @@ const SignInModal = ({ isOpen, onClose, onSwitchToSignUp }) => {
               Forgot Password?
             </button>
           </div>
-          <Button type="submit" className="w-full">
-            Sign In
+          {error && (
+            <div className="p-3 mb-4 text-sm text-red-500 bg-red-100/10 rounded-lg border border-red-500/20">
+              {error}
+            </div>
+          )}
+          <Button type="submit" className="w-full" disabled={loading}>
+            {loading ? "Signing in..." : "Sign In"}
           </Button>
         </form>
 
