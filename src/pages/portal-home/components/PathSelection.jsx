@@ -116,7 +116,7 @@ const PathSelection = () => {
                 </div>
               </div>
 
-              <div className="absolute inset-0 bg-gradient-to-r from-primary/0 via-primary/5 to-primary/0 opacity-0 group-hover:opacity-100 smooth-transition pointer-events-none" />
+              <div className="absolute inset-0 bg-gradient-to-r from-primary/0 via-primary/5 to-primary/0 opacity-0 smooth-transition pointer-events-none" />
             </Link>
           ))}
         </div>
